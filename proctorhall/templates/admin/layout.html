@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Admin — ProctorHall{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+{% block head %}{% endblock %}
+</head>
+<body>
+
+<div class="admin-shell">
+  <aside class="sidebar">
+    <div class="sb-logo">
+      <span ><i class="fa-solid fa-graduation-cap"></i></span>
+      <div>
+        ProctorHall
+        <span>Proctor Exam System</span>
+      </div>
+    </div>
+
+    <div class="sb-profile">
+      <div class="sb-avatar">{{ user.initial }}</div>
+      <div>
+        <h4>{{ user.name }}</h4>
+        <p>{{ user.email }}</p>
+      </div>
+    </div>
+
+    <div class="sb-nav-title">Main</div>
+    <a href="{% url 'admin_dashboard' %}" class="sb-nav-item{% if active_page == 'dashboard' %} active{% endif %}">
+      <i class="fa-solid fa-gauge-high"></i> Dashboard
+    </a>
+    <a href="{% url 'create_exam' %}" class="sb-nav-item{% if active_page == 'create' %} active{% endif %}">
+      <i class="fa-solid fa-circle-plus"></i> New exam
+    </a>
+
+    <div class="sb-nav-title">Your exams</div>
+    {% for e in sidebar_exams %}
+      <a href="{% url 'exam_detail' exam_id=e.id %}" class="sb-nav-item{% if active_exam_id == e.id %} active{% endif %}">
+        {% if e.is_published %}<i class="fa-solid fa-circle-check"></i>{% else %}<i class="fa-solid fa-file-pen"></i>{% endif %}
+        <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ e.title }}</span>
+      </a>
+    {% empty %}
+      <div style="padding:8px 12px; font-size:0.8rem; color:var(--text-muted);">No exams yet.</div>
+    {% endfor %}
+
+    <div class="sb-nav-title">Review</div>
+    <a href="{% url 'programming_submissions' %}" class="sb-nav-item{% if request.resolver_match.url_name == 'programming_submissions' or request.resolver_match.url_name == 'review_submission' %} active{% endif %}">
+      <i class="fa-solid fa-code"></i> Programming submissions
+    </a>
+
+    <div class="sb-nav-title">Account</div>
+    <a href="{% url 'home' %}" class="sb-nav-item"><i class="fa-solid fa-house"></i> Public site</a>
+    <form method="POST" action="{% url 'logout' %}">
+      {% csrf_token %}
+      <button type="submit" class="sb-nav-item" style="width:100%; border:0; background:transparent; text-align:left; cursor:pointer;">
+        <i class="fa-solid fa-right-from-bracket"></i> Sign out
+      </button>
+    </form>
+  </aside>
+
+  <div class="admin-content">
+    {% for message in messages %}
+      <div class="flash flash-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+    {% block content %}{% endblock %}
+  </div>
+</div>
+
+{% block scripts %}{% endblock %}
+</body>
+</html>

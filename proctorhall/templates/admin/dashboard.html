@@ -1,0 +1,97 @@
+{% extends "admin/layout.html" %}
+{% block title %}Dashboard — ProctorHall Admin{% endblock %}
+{% block content %}
+
+<div class="welcome">
+  <div>
+    <h1>Hello, {{ user.name }} </h1>
+    <p>Manage your exams, review attempts and keep an eye on proctoring flags — all in one place.</p>
+  </div>
+  <div class="exam-icon"><i class="fa-solid fa-clipboard-list"></i></div>
+</div>
+
+<div class="stats">
+  <div class="stat-card">
+    <span class="stat-icon"><i class="fa-solid fa-pen-to-square"></i></span>
+    <h2>{{ exams|length }}</h2>
+    <p>Exams created</p>
+  </div>
+  <div class="stat-card">
+    <span class="stat-icon"><i class="fa-solid fa-circle-check"></i></span>
+    <h2>{{ published_count }}</h2>
+    <p>Published</p>
+  </div>
+  <div class="stat-card">
+    <span class="stat-icon"><i class="fa-solid fa-users"></i></span>
+    <h2>{{ total_attempts }}</h2>
+    <p>Total attempts</p>
+  </div>
+  <div class="stat-card">
+    <span class="stat-icon"><i class="fa-solid fa-triangle-exclamation"></i></span>
+    <h2>{{ flagged_count }}</h2>
+    <p>Attempts with alerts</p>
+  </div>
+</div>
+
+<div class="content-grid">
+  <div class="panel">
+    <h3>Your exams</h3>
+    {% if not exams %}
+      <p class="text-muted">You haven't created any exams yet.</p>
+      <a href="{% url 'create_exam' %}" class="btn" style="margin-top:8px;">+ New exam</a>
+    {% endif %}
+    {% for exam in exams %}
+      <div class="exam-card">
+        <div>
+          <h3 style="margin-bottom:4px;">{{ exam.title }}</h3>
+          <div class="meta">
+            {{ exam.duration_minutes }} min · {{ exam.questions.count }} question(s) · {{ exam.attempts.count }} attempt(s) · {{ exam.total_marks }} marks
+            {% if exam.is_published %}<span class="badge badge-ok" style="margin-left:8px;">Published</span>
+            {% else %}<span class="badge" style="margin-left:8px;">Draft</span>{% endif %}
+          </div>
+        </div>
+        <a href="{% url 'exam_detail' exam_id=exam.id %}" class="btn btn-outline btn-sm">Manage</a>
+      </div>
+    {% endfor %}
+  </div>
+
+  <div class="panel">
+    <h3>Recent activity</h3>
+    {% if not recent_attempts %}
+      <p class="text-muted">No attempts submitted yet.</p>
+    {% endif %}
+    {% for a in recent_attempts %}
+      <p style="font-size:13px; margin-bottom:14px; display:flex; justify-content:space-between; gap:10px;">
+        <span>
+           {% if a.alert_count %}<i class="fa-solid fa-triangle-exclamation" style="margin-right:8px; color:#e0433a;"></i>
+           {% else %}<i class="fa-solid fa-circle-check" style="margin-right:8px; color:#16a34a;"></i>{% endif %}
+          {{ a.student.name }} — {{ a.exam.title }}
+        </span>
+        <span class="text-muted">{{ a.score }}/{{ a.exam.total_marks }}</span>
+      </p>
+    {% endfor %}
+    <div style="margin-top:8px; padding-top:12px; border-top:1px solid var(--line); font-size:0.85rem; color:var(--text-muted);">
+      Average pass rate across published exams: <strong style="color:var(--text);">{{ avg_pass_rate }}%</strong>
+    </div>
+  </div>
+</div>
+
+<section class="panel pending-review-panel">
+  <div class="pending-review-heading">
+    <div><h3>Programming answers awaiting marks</h3><p class="text-muted">{{ pending_programming_count }} unmarked submission(s)</p></div>
+    <a href="{% url 'programming_submissions' %}" class="btn btn-outline btn-sm">All programming submissions</a>
+  </div>
+  {% if pending_programming %}
+    <div class="pending-submission-list">
+      {% for answer in pending_programming %}
+      <a class="pending-submission-row" href="{% url 'review_submission' answer_id=answer.id %}">
+        <span><strong>{{ answer.attempt.student.name }}</strong><small>{{ answer.attempt.exam.title }}</small></span>
+        <span class="pending-language">{{ answer.programming_language|title }}</span>
+        <span class="badge badge-warn">Needs marking</span>
+      </a>
+      {% endfor %}
+    </div>
+  {% else %}<p class="text-muted">No programming answers are waiting for marks.</p>{% endif %}
+</section>
+
+{% endblock %}

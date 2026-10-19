@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Create account — ProctorHall{% endblock %}
+{% block content %}
+<div class="container-narrow">
+  <div class="auth-shell">
+    <div class="auth-icon-box"><i class="fa-solid fa-graduation-cap"></i></div>
+    <h2>Create your account</h2>
+    <p class="subtitle">Join ProctorHall in a minute</p>
+    <form method="POST" class="form-stack">
+      {% csrf_token %}
+      <div>
+        <label>University of Lusaka student ID</label>
+        <div class="neu-input-container">
+          <i class="fa-regular fa-id-card"></i>
+          <input type="text" name="student_id" placeholder="BIT23240508" pattern="BIT[0-9]{8}" title="Use BIT followed by exactly 8 digits, e.g. BIT23240508" maxlength="11" required>
+        </div>
+      </div>
+      <div>
+        <label>Email</label>
+        <div class="neu-input-container">
+          <i class="fa-regular fa-envelope"></i>
+          <input type="email" name="email" placeholder="you@example.com" required>
+        </div>
+      </div>
+      <div>
+        <label>Password</label>
+        <div class="neu-input-container">
+          <i class="fa-solid fa-key"></i>
+          <input type="password" name="password" placeholder="At least 8 characters" required minlength="8">
+        </div>
+      </div>
+      <p class="text-muted" style="font-size:0.82rem;">Use your University of Lusaka student ID (BIT followed by 8 digits). New accounts are created as student accounts; administrators are provisioned separately.</p>
+      <button type="submit" class="btn btn-block">Create account</button>
+    </form>
+    <p class="bottom-link">Already have an account? <a href="{% url 'login' %}">Sign in</a>.</p>
+  </div>
+</div>
+{% endblock %}

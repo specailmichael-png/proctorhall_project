@@ -1,0 +1,46 @@
+{% extends "admin/layout.html" %}
+{% block title %}New exam — ProctorHall Admin{% endblock %}
+{% block content %}
+
+<div class="page-title">
+  <h2>New exam</h2>
+  <p>Set the basics now — you'll add questions on the next screen.</p>
+</div>
+
+<div class="panel" style="max-width:560px;">
+  <form method="POST" class="form-stack">
+    {% csrf_token %}
+    <div>
+      <label>Title</label>
+      <div class="neu-input-container">
+        <i class="fa-solid fa-heading"></i>
+        <input type="text" name="title" required placeholder="e.g. BIT316 Practical Assessment 1">
+      </div>
+    </div>
+    <div>
+      <label>Description</label>
+      <div class="neu-input-container" style="align-items:flex-start;">
+        <i class="fa-solid fa-align-left" style="margin-top:2px;"></i>
+        <textarea name="description" class="plain" style="box-shadow:none; padding:0;" placeholder="Brief instructions shown to students"></textarea>
+      </div>
+    </div>
+    <div>
+      <label>Duration (minutes)</label>
+      <div class="neu-input-container">
+        <i class="fa-solid fa-clock"></i>
+        <input type="number" name="duration_minutes" value="30" min="5" max="240" required>
+      </div>
+    </div>
+    <div>
+      <label>Exam access password</label>
+      <div class="neu-input-container">
+        <i class="fa-solid fa-key"></i>
+        <input type="password" name="exam_password" minlength="8" required autocomplete="new-password" placeholder="At least 8 characters">
+      </div>
+      <small class="text-muted">Share this password with eligible students separately. It is stored securely and is not shown again.</small>
+    </div>
+    <button type="submit" class="btn">Create &amp; add questions</button>
+  </form>
+</div>
+
+{% endblock %}

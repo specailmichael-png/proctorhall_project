@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}ProctorHall — Practical exams, honestly monitored{% endblock %}
+{% block content %}
+
+<section class="hero">
+  <div class="container-narrow hero-grid">
+    <div>
+      <div class="hero-eyebrow">Online Practical Examination &amp; Proctoring Platform</div>
+      <h1>Run practical exams your department can actually trust.</h1>
+      <p>ProctorHall watches for what human invigilators can't scale to: a second
+      face in frame, a phone on the desk, a browser tab switched mid-question —
+      all detected live, in the student's own browser, no extra hardware required.</p>
+      <div class="hero-actions">
+        <a href="{% url 'register' %}" class="btn">Create an account</a>
+        <a href="{% url 'login' %}" class="btn btn-outline">Sign in</a>
+      </div>
+    </div>
+    <div class="watch-panel">
+      <div style="font-weight:800; font-size:1.05rem; margin-bottom:10px;">Live session checks</div>
+      <div class="status-row"><span><span class="dot dot-ok"></span>Face detected</span><span class="text-muted">Continuous</span></div>
+      <div class="status-row"><span><span class="dot dot-ok"></span>Single candidate</span><span class="text-muted">Continuous</span></div>
+      <div class="status-row"><span><span class="dot dot-warn"></span>Gaze on screen</span><span class="text-muted">Every 2s</span></div>
+      <div class="status-row"><span><span class="dot dot-ok"></span>No phone in frame</span><span class="text-muted">Every 2s</span></div>
+      <div class="status-row"><span><span class="dot dot-ok"></span>Tab focus</span><span class="text-muted">Event-based</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container-narrow">
+    <h2>How a session runs</h2>
+    <div class="feature-list">
+      <div class="feature-card">
+        <div class="feature-num">01</div>
+        <h3>Professor builds the exam</h3>
+        <p>Set a title, duration and multiple-choice questions from the admin dashboard. Publish when ready.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-num">02</div>
+        <h3>Student takes it, camera on</h3>
+        <p>The browser asks for camera access, checks for a single face, and enforces full-screen for the duration.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-num">03</div>
+        <h3>Violations are logged, not guessed</h3>
+        <p>Every flagged moment — a second face, a phone, a tab switch — lands in a timestamped log the professor can review.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" style="padding-top:0;">
+  <div class="container-narrow">
+    <h2>What it checks for</h2>
+    <div class="feature-list">
+      <div class="feature-card"><h3>Face presence</h3><p>Flags when no face, or more than one face, is visible in frame.</p></div>
+      <div class="feature-card"><h3>Gaze &amp; head pose</h3><p>Estimates whether the candidate is looking at the screen or consistently away from it.</p></div>
+      <div class="feature-card"><h3>Object detection</h3><p>Watches for phones or other unauthorised devices entering the frame.</p></div>
+      <div class="feature-card"><h3>Tab &amp; window focus</h3><p>Detects when the exam tab loses focus or the browser leaves full-screen.</p></div>
+      <div class="feature-card"><h3>Timed sessions</h3><p>Auto-submits when time runs out, no extensions needed.</p></div>
+      <div class="feature-card"><h3>Reviewable logs</h3><p>Professors see a per-student violation timeline, not just a final score.</p></div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

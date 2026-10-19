@@ -1,0 +1,40 @@
+{% extends "admin/layout.html" %}
+{% block title %}Upload results — {{ exam.title }}{% endblock %}
+{% block content %}
+<div class="page-title">
+  <h2>Upload results — {{ exam.title }}</h2>
+  <p>Bulk update marks and feedback for submitted attempts with a CSV file.</p>
+</div>
+
+<div class="panel">
+  <h3>1. Prepare the CSV</h3>
+  <p class="text-muted">Start from the current results so nothing is lost, then edit the marks.</p>
+  <a href="{% url 'export_results' exam_id=exam.id %}" class="btn btn-outline btn-sm"><i class="fa-solid fa-download"></i> Download current results (CSV)</a>
+  <p style="margin-top:14px; font-weight:700;">Required columns (first row must be the header):</p>
+  <table style="max-width:640px;">
+    <thead><tr><th>Column</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td><code>student_email</code></td><td>Email of the student who attempted the exam</td></tr>
+      <tr><td><code>question_number</code></td><td>Question number as shown on the exam page (1, 2, 3…)</td></tr>
+      <tr><td><code>marks</code></td><td>Marks to award — a whole number between 0 and the question's max marks</td></tr>
+      <tr><td><code>feedback</code></td><td>Optional written feedback for the student</td></tr>
+    </tbody>
+  </table>
+  <p class="text-muted" style="margin-top:12px; font-size:0.85rem;">Extra columns (for example <code>student_name</code>, <code>max_marks</code>, <code>status</code>) are ignored, so the exported file can be re-uploaded unchanged. Save the file as UTF-8 CSV.</p>
+</div>
+
+<div class="panel">
+  <h3>2. Upload the file</h3>
+  <form method="POST" action="{% url 'upload_results' exam_id=exam.id %}" enctype="multipart/form-data" class="form-stack">
+    {% csrf_token %}
+    <div>
+      <label for="results_file">Results CSV file</label>
+      <input type="file" name="results_file" id="results_file" accept=".csv" required>
+    </div>
+    <button type="submit" class="btn" style="align-self:flex-start;"><i class="fa-solid fa-upload"></i> Upload and update results</button>
+  </form>
+  <p class="text-muted" style="margin-top:14px; font-size:0.85rem;">Only rows for students who have <strong>submitted</strong> this exam are applied. Total scores are recalculated automatically. Rows that do not match are reported and skipped.</p>
+</div>
+
+<p><a class="btn btn-outline" href="{% url 'exam_detail' exam_id=exam.id %}">Back to exam</a></p>
+{% endblock %}

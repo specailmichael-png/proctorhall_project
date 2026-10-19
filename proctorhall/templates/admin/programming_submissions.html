@@ -1,0 +1,22 @@
+{% extends "admin/layout.html" %}
+{% block title %}Programming submissions - ProctorHall{% endblock %}
+{% block content %}
+<div class="page-title"><h2>Programming submissions</h2><p>Review source code, award marks, and leave feedback.</p></div>
+<div class="panel">
+  {% if answers %}
+  <table><thead><tr><th>Exam</th><th>Question</th><th>Student</th><th>Language</th><th>Submitted</th><th>Marks</th><th></th></tr></thead>
+    <tbody>{% for answer in answers %}
+      <tr>
+        <td>{{ answer.attempt.exam.title }}</td>
+        <td>{{ answer.question.text|truncatechars:70 }}</td>
+        <td>{{ answer.attempt.student.name }}</td>
+        <td>{{ answer.programming_language|title }}</td>
+        <td>{{ answer.code_submitted_at|date:"Y-m-d H:i:s" }}</td>
+        <td>{% if answer.marks_awarded != None %}{{ answer.marks_awarded }}{% else %}Pending{% endif %}</td>
+        <td><a class="btn btn-outline btn-sm" href="{% url 'review_submission' answer_id=answer.id %}">Open source</a></td>
+      </tr>
+    {% endfor %}</tbody>
+  </table>
+  {% else %}<p class="text-muted">No programming source has been submitted yet.</p>{% endif %}
+</div>
+{% endblock %}

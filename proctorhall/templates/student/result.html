@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Result — {{ exam.title }}{% endblock %}
+{% block content %}
+<section class="section" style="padding-top:12px;">
+  <div class="container-narrow" style="max-width:640px;">
+    <h1>{{ exam.title }}</h1>
+
+    <div class="panel" style="text-align:center; padding:40px;">
+      <div class="score-circle">
+        <span class="big">{{ attempt.score }}</span>
+        <span class="small">out of {{ exam.total_marks }}</span>
+      </div>
+      <p class="text-muted" style="margin:0 auto;">
+        Submitted {% if attempt.submitted_at %}{{ attempt.submitted_at|date:"d M Y, H:i" }} UTC{% else %}&mdash;{% endif %}
+      </p>
+      <div style="margin-top:12px;">
+        {% if user.is_admin %}
+          <span class="badge {% if attempt.logs.count %}badge-warn{% else %}badge-ok{% endif %}">
+            {{ attempt.logs.count }} monitoring event(s) recorded
+          </span>
+        {% else %}
+          <span class="badge badge-ok">Submitted for review</span>
+          <p class="text-muted" style="font-size:0.82rem; margin-top:8px;">Your lecturer reviews your submission together with the exam's monitoring record.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if user.is_admin and attempt.logs.exists %}
+    <div class="panel">
+      <h3>Proctoring log</h3>
+      <p><a href="{% url 'attempt_audit' attempt_id=attempt.id %}" class="btn btn-outline btn-sm">Open full monitoring log</a></p>
+      <table>
+        <thead><tr><th>Time</th><th>Event</th><th>Detail</th></tr></thead>
+        <tbody>
+          {% for log in attempt.logs.all %}
+          <tr>
+            <td>{{ log.timestamp|date:"H:i:s" }}</td>
+            <td><span class="badge {% if log.severity == 'critical' %}badge-danger{% else %}badge-warn{% endif %}">{{ log.get_event_type_display }}</span></td>
+            <td>{{ log.detail }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+
+    <p style="margin-top:24px;">
+      {% if user.is_admin %}
+        <a href="{% url 'exam_detail' exam_id=exam.id %}" class="btn btn-outline">Back to exam</a>
+      {% else %}
+        <a href="{% url 'student_dashboard' %}" class="btn btn-outline">Back to my exams</a>
+      {% endif %}
+    </p>
+  </div>
+</section>
+{% endblock %}

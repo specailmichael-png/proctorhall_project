@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ exam.title }} - ProctorHall{% endblock %}
+{% block body_class %} class="exam-locked"{% endblock %}
+{% block content %}
+<div class="exam-toast" id="examToast"></div>
+<div class="exam-shell">
+  <div class="exam-main">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:24px; gap:16px;">
+      <div><h2 style="margin-bottom:2px;">{{ exam.title }}</h2><p class="text-muted" style="margin:0;">{{ exam.description }}</p></div>
+      <div class="timer" id="timer">--:--</div>
+    </div>
+    <form id="examForm">
+      {% for q in snapshots %}
+      <section class="question-block" data-question-id="{{ q.question_id_at_start }}">
+        <div class="q-index">Q{{ forloop.counter }} · {{ q.marks }} mark(s)</div>
+        <p style="margin:8px 0 4px; font-weight:600;">{{ q.text }}</p>
+        {% if q.kind == 'programming' %}
+          <div class="programming-meta">{{ q.get_programming_language_display }} source submission</div>
+          {% if q.code_editor_required %}
+            <textarea class="code-editor program-source" data-question-id="{{ q.question_id_at_start }}" data-language="{{ q.programming_language }}" data-execution-allowed="{{ q.code_execution_allowed|yesno:'true,false' }}" spellcheck="false" aria-label="{{ q.get_programming_language_display }} answer for question {{ forloop.counter }}">{% if q.current_answer %}{{ q.current_answer.source_code }}{% endif %}</textarea>
+          {% else %}
+            <textarea class="plain program-source" rows="8" data-question-id="{{ q.question_id_at_start }}" data-language="{{ q.programming_language }}" data-execution-allowed="false" spellcheck="false" aria-label="{{ q.get_programming_language_display }} source answer for question {{ forloop.counter }}">{% if q.current_answer %}{{ q.current_answer.source_code }}{% endif %}</textarea>
+          {% endif %}
+            <div class="code-save-row">
+              <span class="code-save-status" data-save-status="{{ q.question_id_at_start }}">Saved on this device</span>
+              <div>
+                {% if q.code_editor_required and q.code_execution_allowed and q.programming_language == 'python' %}<button type="button" class="btn btn-outline btn-sm code-runner-trigger" data-question-id="{{ q.question_id_at_start }}"><i class="fa-solid fa-play"></i> Run</button>{% endif %}
+                <button type="button" class="btn btn-outline btn-sm save-code-trigger" data-question-id="{{ q.question_id_at_start }}">Save now</button>
+              </div>
+            </div>
+        {% else %}
+          <label class="option-row"><input type="radio" name="q_{{ q.question_id_at_start }}" value="A"{% if q.current_answer and q.current_answer.selected_option == 'A' %} checked{% endif %}><span>A. {{ q.option_a }}</span></label>
+          <label class="option-row"><input type="radio" name="q_{{ q.question_id_at_start }}" value="B"{% if q.current_answer and q.current_answer.selected_option == 'B' %} checked{% endif %}><span>B. {{ q.option_b }}</span></label>
+          <label class="option-row"><input type="radio" name="q_{{ q.question_id_at_start }}" value="C"{% if q.current_answer and q.current_answer.selected_option == 'C' %} checked{% endif %}><span>C. {{ q.option_c }}</span></label>
+          <label class="option-row"><input type="radio" name="q_{{ q.question_id_at_start }}" value="D"{% if q.current_answer and q.current_answer.selected_option == 'D' %} checked{% endif %}><span>D. {{ q.option_d }}</span></label>
+        {% endif %}
+      </section>
+      {% empty %}<p>This exam has no questions.</p>{% endfor %}
+      <button type="submit" class="btn" style="margin-top:10px;">Submit exam</button>
+    </form>
+  </div>
+  <aside class="exam-sidebar">
+    <h3>Monitoring</h3>
+    <div class="proctor-video-wrap"><video id="webcam" autoplay muted playsinline></video><canvas id="overlay"></canvas></div>
+    <div class="proctor-status" id="proctorStatus"><span class="dot dot-warn"></span><span>Starting camera…</span></div>
+    <div class="monitor-card">
+      <div class="monitor-live"><span class="dot dot-warn" id="monitorDot"></span><strong id="monitorLabel">Monitoring is starting…</strong></div>
+      <p>Your camera and your activity on this page are being recorded for the duration of the exam.</p>
+      <p class="monitor-note">Recorded details are kept for your lecturer and are not shown to you during the exam.</p>
+    </div>
+  </aside>
+</div>
+
+<div class="exam-gate" id="examGate" hidden>
+  <div class="exam-gate-panel">
+    <i class="fa-solid fa-lock exam-gate-icon"></i>
+    <h2>Secure exam — {{ exam.title }}</h2>
+    <p>Read the rules below, then start. Your screen locks once the exam begins.</p>
+    <ul>
+      <li>The exam runs in <strong>full screen</strong> for its entire duration.</li>
+      <li>Leaving this screen — minimising, switching tab or window — is recorded. After <strong>{{ lockdown_max_warnings }} warnings</strong> your exam is <strong>submitted automatically, answered or not</strong>.</li>
+      <li>Copying, pasting and cutting are <strong>disabled and recorded</strong>.</li>
+      <li>Your camera monitors the exam. The recorded activity is reviewed by your lecturer afterwards.</li>
+    </ul>
+    <button type="button" class="btn" id="beginExamBtn"><i class="fa-solid fa-expand"></i> Begin exam — enter full screen</button>
+    <p class="text-muted exam-gate-note" id="gateNote" hidden></p>
+  </div>
+</div>
+
+<div class="lockdown-overlay" id="lockdownOverlay" hidden>
+  <div class="lockdown-panel">
+    <i class="fa-solid fa-triangle-exclamation lockdown-icon"></i>
+    <h2 id="lockdownTitle">Warning</h2>
+    <p id="lockdownMessage">You left the secure exam screen. This has been recorded in your monitoring log.</p>
+    <p class="lockdown-rule">After {{ lockdown_max_warnings }} warnings your exam is submitted automatically — answered or not.</p>
+    <button type="button" class="btn" id="returnToExamBtn" hidden>Return to exam — re-enter full screen</button>
+  </div>
+</div>
+
+<div class="code-runner" id="codeRunner" hidden>
+  <div class="code-runner-backdrop" data-runner-close></div>
+  <section class="code-runner-panel" role="dialog" aria-modal="true" aria-labelledby="codeRunnerTitle">
+    <div class="code-runner-header"><div><span class="code-runner-kicker">Runs in your browser</span><h2 id="codeRunnerTitle">Code runner</h2></div><button type="button" class="code-runner-close" data-runner-close aria-label="Close code runner">&times;</button></div>
+    <p class="text-muted code-runner-help">Python runs in your own browser with Pyodide (WebAssembly) — your code is never executed on the exam server. Every run is recorded in your monitoring log. Your source is always autosaved and submitted for marking regardless of any run.</p>
+    <div class="code-runner-toolbar"><label for="runnerLanguage">Question language</label><select id="runnerLanguage" class="plain" disabled><option value="python">Python</option><option value="javascript">JavaScript</option><option value="java">Java</option><option value="cpp">C++</option><option value="csharp">C#</option></select><button type="button" class="btn btn-sm" id="runCode"><i class="fa-solid fa-play"></i> Run</button></div>
+    <textarea id="codeEditor" class="code-editor" spellcheck="false" aria-label="Student source code"></textarea>
+    <div class="code-output-wrap"><div class="code-output-label">Console output</div><pre id="codeOutput" class="code-output">Click Run to see output.</pre></div>
+  </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script defer src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+<script>
+  window.PROCTOR_CONFIG = {
+    attemptId: {{ attempt.id }}, remainingSeconds: {{ remaining_seconds }}, csrfToken: "{{ csrf_token }}",
+    submitUrl: "{% url 'submit_exam' attempt_id=attempt.id %}",
+    saveUrl: "{% url 'save_code' attempt_id=attempt.id %}",
+    runCodeUrl: "{% url 'run_code' attempt_id=attempt.id %}",
+    heartbeatUrl: "{% url 'heartbeat' attempt_id=attempt.id %}",
+    logUrl: "{% url 'proctor_log' %}",
+    faceModelBaseUrl: "https://justadudewhohacks.github.io/face-api.js/models",
+    pyodideIndexUrl: "https://cdn.jsdelivr.net/pyodide/v{{ PYODIDE_VERSION }}/full",
+    pyodideWorkerUrl: "{% static 'js/pyodide-worker.js' %}",
+    lockdownMaxWarnings: {{ lockdown_max_warnings }}
+  };
+</script>
+<script defer src="{% static 'js/proctor.js' %}"></script>
+<script defer src="{% static 'js/exam.js' %}"></script>
+{% endblock %}

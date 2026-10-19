@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}ProctorHall{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+{% block head %}{% endblock %}
+</head>
+<body{% block body_class %}{% endblock %}>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="{% url 'home' %}" class="brand">
+      <span class="brand-mark"><i class="fa-solid fa-graduation-cap"></i></span> ProctorHall
+    </a>
+    <div class="nav-links">
+      {% if user.is_authenticated %}
+        {% if user.is_admin %}
+          <a href="{% url 'admin_dashboard' %}" class="plain">Dashboard</a>
+        {% else %}
+          <a href="{% url 'student_dashboard' %}" class="plain">My exams</a>
+        {% endif %}
+        <span class="nav-user">{{ user.name }}</span>
+        <form method="POST" action="{% url 'logout' %}" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-outline btn-sm">Sign out</button>
+        </form>
+      {% else %}
+        <a href="{% url 'login' %}" class="plain">Sign in</a>
+        <a href="{% url 'register' %}" class="btn btn-sm">Get started</a>
+      {% endif %}
+    </div>
+  </div>
+</nav>
+
+<main>
+  <div class="container-narrow" style="padding-top:20px;">
+    {% for message in messages %}
+      <div class="flash flash-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+  </div>
+  {% block content %}{% endblock %}
+</main>
+
+<footer>
+  ProctorHall — built for BIT316 · Online Practical Examination &amp; Proctoring Platform
+</footer>
+
+{% block scripts %}{% endblock %}
+</body>
+</html>

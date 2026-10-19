@@ -1,0 +1,54 @@
+{% extends "admin/layout.html" %}
+{% block title %}Review programming answer - ProctorHall{% endblock %}
+{% block content %}
+<div class="page-title"><h2>Programming answer</h2><p>{{ answer.attempt.exam.title }} · {{ answer.attempt.student.name }} · {{ answer.programming_language|title }}</p></div>
+<div class="panel">
+  <h3>{{ snapshot.text }}</h3>
+  <p class="text-muted">Submitted {{ answer.code_submitted_at|date:"Y-m-d H:i:s" }} UTC · {{ snapshot.marks }} marks available</p>
+  <textarea class="code-editor review-code" readonly spellcheck="false" aria-label="Submitted source code">{{ answer.final_version.source_code|default:answer.source_code }}</textarea>
+  <section class="panel" style="margin-top:18px;" id="submissionTester" data-language="{{ answer.programming_language }}">
+    <h3>Test this submission on your computer</h3>
+    {% if answer.programming_language == "python" %}
+      <p class="text-muted">Python runs in this browser using Pyodide. The submitted code is not sent to the ProctorHall server for execution. The first run downloads the runtime and needs an internet connection.</p>
+      <button type="button" class="btn btn-outline" id="runSubmission"><i class="fa-solid fa-play"></i> Run Python here</button>
+      <div class="code-output-wrap">
+        <div class="code-output-label">Console output</div>
+        <pre id="submissionOutput" class="code-output" aria-live="polite">Click Run to test the submitted Python source.</pre>
+      </div>
+    {% elif answer.programming_language == "java" %}
+      <p class="text-muted">Java is not executed by this website. Download the source and compile/run it on your computer with a locally installed JDK.</p>
+      <a class="btn btn-outline" href="{% url 'download_java_submission' answer_id=answer.id %}"><i class="fa-solid fa-download"></i> Download Java source</a>
+      <p class="text-muted" style="margin-top:10px;">In a terminal, run <code>javac YourClass.java</code>, then <code>java YourClass</code> (replace <code>YourClass</code> with the public class name in the file).</p>
+    {% else %}
+      <p class="text-muted">This page does not execute {{ answer.programming_language|title }} code. The source is displayed above for review.</p>
+    {% endif %}
+  </section>
+  <div class="panel" style="margin-top:18px;">
+    <h3>Mark and comment</h3>
+    <form method="post" class="form-stack" style="max-width:720px;">
+      {% csrf_token %}
+      <div><label>Marks awarded</label><input class="plain" type="number" name="marks_awarded" min="0" max="{{ snapshot.marks }}" value="{{ answer.marks_awarded|default_if_none:'' }}" required></div>
+      <div><label>Feedback</label><textarea class="plain" name="lecturer_feedback" rows="5">{{ answer.lecturer_feedback }}</textarea></div>
+      <button type="submit" class="btn">Save marks and feedback</button>
+    </form>
+  </div>
+  <h3 style="margin-top:22px;">Saved versions</h3>
+  {% for version in answer.versions.all %}
+    <div class="version-row"><strong>{{ version.saved_at|date:"Y-m-d H:i:s" }} UTC</strong>{% if version.is_final %}<span class="badge badge-ok">Final submission</span>{% else %}<span class="badge">Autosave</span>{% endif %}</div>
+  {% empty %}<p class="text-muted">No version history.</p>{% endfor %}
+</div>
+<p><a class="btn btn-outline" href="{% url 'programming_submissions' %}">Back to submissions</a></p>
+{% endblock %}
+
+{% if answer.programming_language == "python" %}
+{% block scripts %}
+{% load static %}
+<script>
+  window.ADMIN_RUNNER_CONFIG = {
+    pyodideIndexUrl: "https://cdn.jsdelivr.net/pyodide/v{{ PYODIDE_VERSION }}/full",
+    workerUrl: "{% static 'js/pyodide-worker.js' %}"
+  };
+</script>
+<script defer src="{% static 'js/admin-review-runner.js' %}"></script>
+{% endblock %}
+{% endif %}

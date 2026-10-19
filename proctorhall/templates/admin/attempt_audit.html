@@ -1,0 +1,47 @@
+{% extends "admin/layout.html" %}
+{% block title %}Monitoring log — {{ attempt.student.name }}{% endblock %}
+{% block content %}
+<div class="page-title">
+  <h2>Monitoring activity log</h2>
+  <p>{{ attempt.student.name }} ({{ attempt.student.email }}) · {{ attempt.exam.title }} ·
+     started {{ attempt.started_at|date:"d M Y, H:i" }}{% if attempt.submitted_at %} · submitted {{ attempt.submitted_at|date:"d M Y, H:i" }}{% endif %} UTC
+  </p>
+</div>
+
+<div class="stats" style="grid-template-columns:repeat(4, 1fr);">
+  <div class="stat-card"><span class="stat-icon"><i class="fa-solid fa-list"></i></span><h2>{{ counts.total }}</h2><p>Total events</p></div>
+  <div class="stat-card"><span class="stat-icon"><i class="fa-solid fa-triangle-exclamation"></i></span><h2>{{ counts.warning }}</h2><p>Warnings</p></div>
+  <div class="stat-card"><span class="stat-icon"><i class="fa-solid fa-circle-exclamation"></i></span><h2>{{ counts.critical }}</h2><p>Critical</p></div>
+  <div class="stat-card"><span class="stat-icon"><i class="fa-solid fa-star"></i></span><h2>{% if attempt.score != None %}{{ attempt.score }}{% else %}&mdash;{% endif %}</h2><p>Score awarded</p></div>
+</div>
+
+<div class="panel">
+  <h3>Events by type</h3>
+  <div style="display:flex; flex-wrap:wrap; gap:8px;">
+    {% for row in counts.by_type %}
+      <span class="badge {% if row.event_type == 'EXAM_AUTO_SUBMITTED' or row.event_type == 'DEVICE_DETECTED' or row.event_type == 'MULTIPLE_FACE' or row.event_type == 'NO_FACE' or row.event_type == 'CAMERA_INTERRUPTION' %}badge-danger{% else %}badge-warn{% endif %}">
+        {{ row.event_type|cut:'_' }} × {{ row.total }}
+      </span>
+    {% empty %}<span class="text-muted">No events were recorded for this attempt.</span>{% endfor %}
+  </div>
+</div>
+
+<div class="panel">
+  <h3>Chronological activity</h3>
+  <table><thead><tr><th>Time (UTC)</th><th>Event</th><th>Severity</th><th>Details</th></tr></thead><tbody>
+    {% for log in logs %}
+      <tr>
+        <td>{{ log.timestamp|date:"d M H:i:s" }}</td>
+        <td>{{ log.get_event_type_display }}</td>
+        <td><span class="badge {% if log.severity == 'critical' %}badge-danger{% elif log.severity == 'warning' %}badge-warn{% else %}{% endif %}">{{ log.get_severity_display }}</span></td>
+        <td>{{ log.detail }}</td>
+      </tr>
+    {% empty %}<tr><td colspan="4">No activity has been logged.</td></tr>{% endfor %}
+  </tbody></table>
+</div>
+
+<p>
+  <a class="btn btn-outline" href="{% url 'exam_detail' exam_id=attempt.exam_id %}">Back to exam</a>
+  {% if attempt.score != None %}<a class="btn btn-outline" href="{% url 'result' attempt_id=attempt.id %}">View result page</a>{% endif %}
+</p>
+{% endblock %}

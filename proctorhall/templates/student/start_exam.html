@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Enter exam password — ProctorHall{% endblock %}
+{% block content %}
+<div class="container-narrow">
+  <div class="auth-shell">
+    <div class="auth-icon-box"><i class="fa-solid fa-lock"></i></div>
+    <h2>{{ exam.title }}</h2>
+    <p class="subtitle">Enter the password provided by your lecturer to start this exam.</p>
+    <form method="post" class="form-stack">
+      {% csrf_token %}
+      <div>
+        <label>Exam password</label>
+        <div class="neu-input-container">
+          <i class="fa-solid fa-key"></i>
+          <input type="password" name="exam_password" required autocomplete="off" autofocus>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-block">Verify and continue</button>
+    </form>
+    <p class="bottom-link"><a href="{% url 'student_dashboard' %}">Back to my exams</a></p>
+  </div>
+</div>
+{% endblock %}

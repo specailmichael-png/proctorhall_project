@@ -1,0 +1,168 @@
+{% extends "admin/layout.html" %}
+{% block title %}{{ exam.title }} — manage{% endblock %}
+{% block content %}
+
+<div class="page-title" style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px;">
+  <div>
+    <h2>{{ exam.title }}</h2>
+    <p>{{ exam.duration_minutes }} minutes · {{ exam.total_marks }} total marks
+      {% if exam.is_published %}<span class="badge badge-ok" style="margin-left:6px;">Published</span>
+      {% else %}<span class="badge" style="margin-left:6px;">Draft</span>{% endif %}
+    </p>
+  </div>
+  <form method="POST" action="{% url 'toggle_publish' exam_id=exam.id %}">
+    {% csrf_token %}
+    {% if exam.is_published %}
+      <button type="submit" class="btn btn-outline">Unpublish</button>
+    {% else %}
+      <button type="submit" class="btn">Publish</button>
+    {% endif %}
+  </form>
+</div>
+
+{% if exam.description %}<p class="text-muted">{{ exam.description }}</p>{% endif %}
+
+<div class="panel exam-settings-panel">
+  <div><h3>Exam settings</h3><p class="text-muted">Changes apply to new attempts. Students already in progress keep their original time limit. Exam password: {% if exam.has_access_password %}set{% else %}not set{% endif %}.</p></div>
+  <form method="post" action="{% url 'update_exam_settings' exam_id=exam.id %}" class="exam-settings-form">
+    {% csrf_token %}
+    <div><label>Title</label><input class="plain" type="text" name="title" value="{{ exam.title }}" required></div>
+    <div><label>Duration (minutes)</label><input class="plain" type="number" name="duration_minutes" min="5" max="240" value="{{ exam.duration_minutes }}" required></div>
+    <div><label>Description</label><textarea class="plain" name="description" rows="2">{{ exam.description }}</textarea></div>
+    <div><label>Replace exam password (leave blank to keep current password)</label><input class="plain" type="password" name="exam_password" minlength="8" autocomplete="new-password"></div>
+    <button class="btn btn-outline" type="submit">Save settings</button>
+  </form>
+</div>
+
+<div class="panel" style="margin-top:16px;">
+  <h3>Questions</h3>
+  {% if not exam.questions.all %}
+    <p class="text-muted">No questions yet — add the first one below.</p>
+  {% endif %}
+  {% for q in exam.questions.all %}
+    <div style="padding:12px 0; border-bottom:1px solid var(--line);">
+      <span class="badge">Q{{ forloop.counter }}</span> <strong>{{ q.text }}</strong>
+      <div style="font-size:0.83rem; color:var(--text-muted); margin-top:6px;">
+        {% if q.kind == 'mcq' %}
+          A) {{ q.option_a }} &nbsp; B) {{ q.option_b }} &nbsp; C) {{ q.option_c }} &nbsp; D) {{ q.option_d }}
+          &nbsp;·&nbsp; Correct: <strong style="color:var(--success);">{{ q.correct_option }}</strong>
+        {% else %}
+          Programming · {{ q.get_programming_language_display }} · {{ q.marks }} marks
+          · Editor {% if q.code_editor_required %}required{% else %}optional{% endif %}
+          · Execution {% if q.code_execution_allowed %}allowed{% else %}disabled{% endif %}
+        {% endif %}
+      </div>
+    </div>
+  {% endfor %}
+
+  <h3 style="margin-top:24px;">Add a question</h3>
+  <form method="POST" action="{% url 'add_question' exam_id=exam.id %}" class="form-stack" style="max-width:600px;" id="questionForm">
+    {% csrf_token %}
+    <div>
+      <label>Question type</label>
+      <select name="kind" id="questionKind" class="plain">
+        <option value="mcq">Multiple choice</option>
+        <option value="programming">Programming</option>
+      </select>
+    </div>
+    <div>
+      <label>Question text</label>
+      <textarea name="text" class="plain" required></textarea>
+    </div>
+    <div id="mcqFields" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+      <div><label>Option A</label><input type="text" name="option_a" class="plain" required></div>
+      <div><label>Option B</label><input type="text" name="option_b" class="plain" required></div>
+      <div><label>Option C</label><input type="text" name="option_c" class="plain" required></div>
+      <div><label>Option D</label><input type="text" name="option_d" class="plain" required></div>
+    </div>
+    <div id="correctOptionField">
+      <label>Correct option</label>
+      <select name="correct_option" class="plain">
+        <option value="A">A</option>
+        <option value="B">B</option>
+        <option value="C">C</option>
+        <option value="D">D</option>
+      </select>
+    </div>
+    <div id="programmingFields" hidden>
+      <div>
+        <label>Programming language</label>
+        <select name="programming_language" class="plain">
+          {% for value, label in language_choices %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+        </select>
+      </div>
+      <label class="option-row"><input type="checkbox" name="code_editor_required" checked> Code editor required</label>
+      <label class="option-row"><input type="checkbox" name="code_execution_allowed"> Allow test runs — code runs in the student's browser (Python only), never on the server</label>
+    </div>
+    <div>
+      <label>Marks</label>
+      <input type="number" name="marks" class="plain" min="1" max="100" value="1" required>
+    </div>
+    <button type="submit" class="btn" style="align-self:flex-start;">Add question</button>
+  </form>
+</div>
+
+<div class="panel">
+  <h3>Attempts &amp; monitoring</h3>
+  {% if not attempts %}
+    <p class="text-muted">No students have started this exam yet.</p>
+  {% else %}
+    <table>
+      <thead><tr><th>Student</th><th>Status</th><th>Score</th><th>Monitoring events</th><th></th></tr></thead>
+      <tbody>
+        {% for a in attempts %}
+        <tr>
+          <td>{{ a.student.name }}<br><small class="text-muted">{{ a.student.email }}</small></td>
+          <td>
+            {% if a.status == "submitted" %}<span class="badge badge-ok">Submitted</span>
+            {% else %}<span class="badge badge-warn">In progress</span>{% endif %}
+          </td>
+          <td>{% if a.score != None %}{{ a.score }}{% else %}&mdash;{% endif %}/{{ exam.total_marks }}</td>
+          <td>
+            {{ a.log_count }} total
+            {% if a.critical_log_count %} · <span class="badge badge-danger">{{ a.critical_log_count }} critical</span>{% endif %}
+            {% if a.warning_log_count %} · <span class="badge badge-warn">{{ a.warning_log_count }} warning</span>{% endif %}
+          </td>
+          <td style="white-space:nowrap;">
+            {% if a.status != "in_progress" %}
+              <a href="{% url 'attempt_audit' attempt_id=a.id %}" class="btn btn-outline btn-sm"><i class="fa-solid fa-eye"></i> Monitoring log</a>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+</div>
+
+<div class="panel" style="margin-top:16px;">
+  <h3>Results</h3>
+  <p class="text-muted">Award marks per student from <a href="{% url 'programming_submissions' %}">programming submissions</a>, or update many results at once with a CSV file.</p>
+  <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+    <a href="{% url 'export_results' exam_id=exam.id %}" class="btn btn-outline btn-sm"><i class="fa-solid fa-download"></i> Download current results (CSV)</a>
+    <a href="{% url 'upload_results' exam_id=exam.id %}" class="btn btn-sm"><i class="fa-solid fa-upload"></i> Upload results CSV</a>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const kind = document.getElementById("questionKind");
+  const mcqFields = document.getElementById("mcqFields");
+  const correctField = document.getElementById("correctOptionField");
+  const programmingFields = document.getElementById("programmingFields");
+  function syncQuestionFields() {
+    const programming = kind.value === "programming";
+    mcqFields.hidden = programming;
+    mcqFields.style.display = programming ? "none" : "grid";
+    mcqFields.querySelectorAll("input").forEach((input) => {
+      input.required = !programming;
+    });
+    correctField.hidden = programming;
+    programmingFields.hidden = !programming;
+  }
+  kind.addEventListener("change", syncQuestionFields);
+  syncQuestionFields();
+</script>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Sign in — ProctorHall{% endblock %}
+{% block content %}
+<div class="container-narrow">
+  <div class="auth-shell">
+    <div class="auth-icon-box"><i class="fa-solid fa-lock"></i></div>
+    <h2>Welcome back</h2>
+    <p class="subtitle">Sign in to continue</p>
+    <form method="POST" class="form-stack">
+      {% csrf_token %}
+      <div>
+        <label>Email or student ID</label>
+        <div class="neu-input-container">
+          <i class="fa-regular fa-user"></i>
+          <input type="text" name="email" placeholder="you@example.com or BIT23240508" required>
+        </div>
+      </div>
+      <div>
+        <label>Password</label>
+        <div class="neu-input-container">
+          <i class="fa-solid fa-key"></i>
+          <input type="password" name="password" placeholder="••••••••" required>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-block">Sign in</button>
+    </form>
+    <p class="bottom-link">No account yet? <a href="{% url 'register' %}">Register here</a>.</p>
+  </div>
+</div>
+{% endblock %}

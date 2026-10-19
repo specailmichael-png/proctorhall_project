@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}My exams — ProctorHall{% endblock %}
+{% block content %}
+<section class="section" style="padding-top:12px;">
+  <div class="container-narrow">
+    <h1>My exams</h1>
+    <p class="text-muted" style="margin-bottom:24px;">Signed in as {{ user.name }}</p>
+
+    <div class="stats" style="grid-template-columns:repeat(3,1fr); max-width:640px; margin-bottom:28px;">
+      <div class="stat-card">
+        <span class="stat-icon"><i class="fa-solid fa-list-check"></i></span>
+        <h2>{{ exams|length }}</h2>
+        <p>Available exams</p>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon"><i class="fa-solid fa-circle-check"></i></span>
+        <h2>{{ completed_count }}</h2>
+        <p>Completed</p>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon"><i class="fa-solid fa-chart-simple"></i></span>
+        <h2>{{ avg_score_pct }}%</h2>
+        <p>Average score</p>
+      </div>
+    </div>
+
+    {% if not exams %}
+      <div class="panel"><p>No exams have been published yet. Check back once your professor publishes one.</p></div>
+    {% endif %}
+
+    {% for exam in exams %}
+      {% with attempt=exam.student_attempt %}
+      <div class="exam-card">
+        <div>
+          <h3 style="margin-bottom:4px;">{{ exam.title }}</h3>
+          <div class="meta">{{ exam.duration_minutes }} minutes · {{ exam.questions.count }} questions · {{ exam.total_marks }} marks</div>
+        </div>
+        <div>
+          {% if attempt and attempt.status != "in_progress" %}
+            <span class="badge badge-ok">Submitted · {{ attempt.score }}/{{ exam.total_marks }}</span>
+            <a href="{% url 'result' attempt_id=attempt.id %}" class="btn btn-outline btn-sm" style="margin-left:10px;">View result</a>
+          {% elif attempt %}
+            <a href="{% url 'take_exam' attempt_id=attempt.id %}" class="btn btn-sm">Resume</a>
+          {% else %}
+            <a href="{% url 'start_exam' exam_id=exam.id %}" class="btn btn-sm">Start exam</a>
+          {% endif %}
+        </div>
+      </div>
+      {% endwith %}
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}
