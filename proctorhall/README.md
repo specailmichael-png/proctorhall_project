@@ -5,7 +5,7 @@ ProctorHall is a Django-based online examination platform with student/admin rol
 ## Stack
 
 - Django 6.1
-- MySQL with `mysqlclient` in a deployed setup; SQLite is the local/test default
+- PostgreSQL or MySQL in a deployed setup; SQLite is the local/test default
 - Django authentication, sessions, CSRF middleware, ORM, and migrations
 - HTML templates, existing CSS, and browser JavaScript
 - face-api.js and TensorFlow.js models for client-side camera analysis
@@ -52,6 +52,19 @@ python manage.py runserver
 ```
 
 Install a compatible MySQL Server (8.0.11 or later) and the `mysqlclient` build prerequisites for your platform. In production set `APP_ENV=production`, use HTTPS, and provide a strong `SECRET_KEY`; production cookies are marked secure and Django rejects an unset secret.
+
+## Free Demo Deployment (Render + Neon)
+
+The repository includes a Render Blueprint at `../render.yaml`. It configures a free Render web service, installs the Python dependencies, collects static files, runs database migrations at startup, and starts Django with Gunicorn. The app supports PostgreSQL connection URLs (including Neon URLs) through `DATABASE_URL`; static assets are served by WhiteNoise.
+
+1. Push this repository to GitHub and make sure the GitHub repository is private if it contains non-public exam material.
+2. Create a free PostgreSQL project on [Neon](https://neon.com/) and copy its **pooled** connection string. Keep the string private.
+3. In [Render](https://render.com/), create a **Blueprint** and connect the GitHub repository containing this project. Render reads `render.yaml` from the repository root.
+4. When prompted, set `DATABASE_URL` to the Neon connection string. Set `BOOTSTRAP_ADMIN_EMAIL`, `BOOTSTRAP_ADMIN_NAME`, and `BOOTSTRAP_ADMIN_PASSWORD` to the lecturer's details; choose a unique password of at least 8 characters. Render generates `SECRET_KEY` and sets `APP_ENV=production`; the app uses Render's hostname automatically.
+5. Apply the Blueprint and wait for the first deployment to finish. The startup command applies migrations and creates the initial admin account. Once the deployment succeeds, remove `BOOTSTRAP_ADMIN_PASSWORD` from the Render environment variables and redeploy. The bootstrap command will leave the existing account unchanged on subsequent restarts.
+6. Sign in with the lecturer account, create an unpublished test exam, and verify the exam flow before inviting students.
+
+This free setup is for demos and light testing, **not live or high-stakes exams**. Free web services sleep after inactivity, so first page loads can be delayed, and local files are temporary. PostgreSQL keeps application records outside the web service, but the free tier is not a substitute for a production backup and availability plan. Do not upload real student records or rely on free hosting for exam sessions. Use a paid, monitored service with managed backups and an availability plan for real examinations.
 
 ## Import Existing Flask Data
 
